@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
+using Newtonsoft.Json;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using Color = System.Drawing.Color;
@@ -126,6 +126,11 @@ namespace SanjeshFetcher
                 {
                     Console.Write("\rFetching {0}%", (float)i / lines.Length * 100f);
                     var splitData = line.Split(' ');
+                    if (splitData.Length < 3) // ignore invalid lines
+                    {
+                        i++;
+                        return;
+                    } 
                     var student = GetStudentData(splitData[0], splitData[1], splitData[2]);
                     if (student.Answers != null) // check incorrect username
                         students.Add(student);
@@ -723,6 +728,9 @@ namespace SanjeshFetcher
                 }
                 excel.Save();
             }
+            // Also output a json file for more details
+            File.WriteAllText("students.json",JsonConvert.SerializeObject(students.ToArray()));
+            Console.WriteLine("By Hirbod Behnam; AE High school");
         }
         /// <summary>
         /// Get the student's data from Sanjesh site
