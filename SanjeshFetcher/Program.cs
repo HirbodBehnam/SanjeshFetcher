@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 using HtmlAgilityPack;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
@@ -109,25 +112,31 @@ namespace SanjeshFetcher
         private const string HeaderOfExcel = "تحلیل کنکور 99 ";
         public static void Main(string[] args)
         {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
             // Setup the client and start get results
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             Client.DefaultRequestHeaders.Add("User-Agent", UserAgent);
             Client.DefaultRequestHeaders.Add("Referer", MainResultUrl);
             // Get the username and passwords from config
-            List<Student> students;
+            ConcurrentBag<Student> students;
             {
                 var lines = File.ReadAllLines("students.txt");
-                students = new List<Student>(lines.Length);
-                for (int i = 0; i<lines.Length; i++)
+                students = new ConcurrentBag<Student>();
+                int i = 0;
+                Parallel.ForEach(lines, (line) =>
                 {
                     Console.Write("\rFetching {0}%", (float)i / lines.Length * 100f);
-                    var splitData = lines[i].Split(' ');
-                    var student = GetStudentData(splitData[0],splitData[1],splitData[2]);
-                    if(student.Answers != null) // check incorrect username
+                    var splitData = line.Split(' ');
+                    var student = GetStudentData(splitData[0], splitData[1], splitData[2]);
+                    if (student.Answers != null) // check incorrect username
                         students.Add(student);
-                }
+                    i++;
+                });
                 Console.WriteLine("\rFetching Done");
             }
+            Console.WriteLine(stopwatch.ElapsedMilliseconds);
+            stopwatch.Restart();
             // Now do some statics stuff for math students
             Console.WriteLine("Doing calculations for math students...");
             using (var excel = new ExcelPackage(new FileInfo("ریاضی.xlsx")))
@@ -718,6 +727,7 @@ namespace SanjeshFetcher
                 }
                 excel.Save();
             }
+            Console.WriteLine(stopwatch.ElapsedMilliseconds);
         }
         /// <summary>
         /// Get the student's data from Sanjesh site
