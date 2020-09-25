@@ -183,7 +183,7 @@ namespace SanjeshFetcher
                     int rowCounter = 3; // start from row 3
                     foreach (var student in students)
                     {
-                        if(!student.IsMathStudent)
+                        if (!student.IsMathStudent)
                             continue;
                         // Add normal info
                         worksheet.Cells[rowCounter, 1].Value = student.Name;
@@ -210,7 +210,7 @@ namespace SanjeshFetcher
                             worksheet.Cells[rowCounter, 4 * i + 7].Value = white;
                             worksheet.Cells[rowCounter, 4 * i + 8].Formula = ExcelFormula.SubjectFormula;
                             // styling
-                            for(int j = 0; j < 4 ;j++)
+                            for (int j = 0; j < 4; j++)
                                 worksheet.Cells[rowCounter, 4 * i + 5 + j].Style.Border.BorderAround(ExcelBorderStyle.Thin);
                             worksheet.Cells[rowCounter, 4 * i + 8].Style.Border.Right.Style = ExcelBorderStyle.Medium;
                             worksheet.Cells[rowCounter, 4 * i + 5].Style.Border.Left.Style = ExcelBorderStyle.Medium;
@@ -227,12 +227,12 @@ namespace SanjeshFetcher
                         worksheet.Cells[rowCounter, i].Formula = ExcelFormula.AverageBottomFormula;
                     // Do styling
                     // Add borders to some headers; Note that these must be added at last to override other borders of the other cells
-                    worksheet.Cells[1,1,1,4].Style.Border.BorderAround(ExcelBorderStyle.Medium);
-                    for(int i = 1; i <= 4; i++) // add for second row
+                    worksheet.Cells[1, 1, 1, 4].Style.Border.BorderAround(ExcelBorderStyle.Medium);
+                    for (int i = 1; i <= 4; i++) // add for second row
                         worksheet.Cells[2, i].Style.Border.BorderAround(ExcelBorderStyle.Medium);
                     for (int i = 3; i <= worksheet.Dimension.Rows; i++) // add for names and average
                     {
-                        for(int j = 1; j <= 4; j++)
+                        for (int j = 1; j <= 4; j++)
                             worksheet.Cells[i, j].Style.Border.BorderAround(ExcelBorderStyle.Thin);
                         worksheet.Cells[i, 4].Style.Border.Right.Style = ExcelBorderStyle.Medium;
                     }
@@ -246,7 +246,7 @@ namespace SanjeshFetcher
                                 ExcelBorderStyle.Medium;
                     }
                     //worksheet.Cells.Style.Border.BorderAround(ExcelBorderStyle.Thin); 
-                    worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid; 
+                    worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
                     worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
                     // Footer style
                     worksheet.Cells[rowCounter, 1, rowCounter, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
@@ -286,7 +286,7 @@ namespace SanjeshFetcher
                         worksheet.Cells[7, 1].Value = "تعداد گزینه سفید";
                         worksheet.Cells[8, 1].Value = "درصد گزینه سفید";
                         worksheet.Cells[9, 1].Value = "درصد سوال";
-                        
+
                         worksheet.Column(1).Width = 15d;
                         worksheet.Row(1).Height = 150d;
 
@@ -296,7 +296,7 @@ namespace SanjeshFetcher
                     int correct = 0, white = 0, wrong = 0;
                     foreach (var student in students)
                     {
-                        if(!student.IsMathStudent) // ignore non math students
+                        if (!student.IsMathStudent) // ignore non math students
                             continue;
                         if (student.Answers[qIndex] == 0) // question is white
                             white++;
@@ -348,12 +348,12 @@ namespace SanjeshFetcher
                     worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
                     worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
                     // Do borders
-                    for(int i = 1; i <= worksheet.Dimension.Rows; i++)
-                    for (int j = 1; j <= worksheet.Dimension.Columns; j++)
-                    {
-                        worksheet.Cells[i, j].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                        worksheet.Cells[i, j].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                    }
+                    for (int i = 1; i <= worksheet.Dimension.Rows; i++)
+                        for (int j = 1; j <= worksheet.Dimension.Columns; j++)
+                        {
+                            worksheet.Cells[i, j].Style.Border.Right.Style = ExcelBorderStyle.Medium;
+                            worksheet.Cells[i, j].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+                        }
 
                     for (int i = 1; i <= worksheet.Dimension.Columns; i++)
                     {
@@ -386,11 +386,11 @@ namespace SanjeshFetcher
                     int rowCounter = 2;
                     foreach (var student in students)
                     {
-                        if(!student.IsMathStudent)
+                        if (!student.IsMathStudent)
                             continue;
                         // Add data
                         worksheet.Cells[rowCounter, 1].Value = student.Name;
-                        for(int i = 0; i < student.Grades.Length; i++)
+                        for (int i = 0; i < student.Grades.Length; i++)
                             worksheet.Cells[rowCounter, i + 2].Value = student.Grades[i];
                         worksheet.Cells[rowCounter, 9].Value = student.RankOverall;
                         worksheet.Cells[rowCounter, 10].Value = student.RankCountryOverall;
@@ -418,12 +418,12 @@ namespace SanjeshFetcher
                         worksheet.Cells[1, i].Style.Border.Right.Style = ExcelBorderStyle.Medium;
                         worksheet.Cells[1, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
                     }
-                    for (int i = 2; i<= worksheet.Dimension.Rows;i++)
-                    for (int j = 2; j <= worksheet.Dimension.Columns; j++)
-                    {
-                        worksheet.Cells[i, j].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                        worksheet.Cells[i, j].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                    }
+                    for (int i = 2; i <= worksheet.Dimension.Rows; i++)
+                        for (int j = 2; j <= worksheet.Dimension.Columns; j++)
+                        {
+                            worksheet.Cells[i, j].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+                            worksheet.Cells[i, j].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+                        }
                 }
                 excel.Save();
             }
@@ -754,7 +754,7 @@ namespace SanjeshFetcher
             }
             catch (Exception) // incorrect username (probably?)
             {
-                Console.WriteLine("\rError on user {0} {1} {2}",parvande,rahgiri,idCode);
+                Console.WriteLine("\rError on user {0} {1} {2}", parvande, rahgiri, idCode);
                 return new Student();
             }
             // Fix name
@@ -822,7 +822,7 @@ namespace SanjeshFetcher
                 student.NormalizedScoreOverall = Helpers.ParsePersianNumber(rowData[specialCapacity ? 4 : 3].InnerHtml);
                 student.RankOverall = Helpers.ParsePersianNumber(rowData[specialCapacity ? 3 : 2].InnerHtml);
                 student.RankCountryOverall = Helpers.ParsePersianNumber(rowData[0].InnerHtml);
-                if(specialCapacity)
+                if (specialCapacity)
                     student.RankSpecialOverall = Helpers.ParsePersianNumber(rowData[2].InnerHtml);
             }
             // Get the answer sheet
@@ -904,7 +904,7 @@ namespace SanjeshFetcher
                             catch (Exception) // happens when the data is سفید; note that in these tables the answers can be empty too; Also happens in tajrobi exam that a question is changed
                             {
                                 var data = new string(rowData[2].InnerText.Where(char.IsDigit).ToArray());
-                                answersKey.Add(data == "" ? (byte) 0 : Convert.ToByte(data));
+                                answersKey.Add(data == "" ? (byte)0 : Convert.ToByte(data));
                             }
                         }
                     }
