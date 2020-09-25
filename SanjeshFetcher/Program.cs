@@ -112,8 +112,6 @@ namespace SanjeshFetcher
         private const string HeaderOfExcel = "تحلیل کنکور 99 ";
         public static void Main(string[] args)
         {
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
             // Setup the client and start get results
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             Client.DefaultRequestHeaders.Add("User-Agent", UserAgent);
@@ -135,8 +133,6 @@ namespace SanjeshFetcher
                 });
                 Console.WriteLine("\rFetching Done");
             }
-            Console.WriteLine(stopwatch.ElapsedMilliseconds);
-            stopwatch.Restart();
             // Now do some statics stuff for math students
             Console.WriteLine("Doing calculations for math students...");
             using (var excel = new ExcelPackage(new FileInfo("ریاضی.xlsx")))
@@ -727,7 +723,6 @@ namespace SanjeshFetcher
                 }
                 excel.Save();
             }
-            Console.WriteLine(stopwatch.ElapsedMilliseconds);
         }
         /// <summary>
         /// Get the student's data from Sanjesh site
