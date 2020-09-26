@@ -145,7 +145,7 @@ namespace SanjeshFetcher
                 // Create each subject
                 foreach (var (title, ranges) in StudentHelpers.MathSubjects)
                 {
-                    var worksheet = excel.Workbook.Worksheets.Add(title + " 1");
+                    var worksheet = excel.Workbook.Worksheets.Add(title + " موضوعی");
                     worksheet.View.RightToLeft = true;
                     worksheet.Column(1).Width = 27.5d;
                     // Setup the header
@@ -277,10 +277,10 @@ namespace SanjeshFetcher
                         continue;
                     }
 
-                    ExcelWorksheet worksheet = excel.Workbook.Worksheets[subjectName + " 2"];
+                    ExcelWorksheet worksheet = excel.Workbook.Worksheets[subjectName + " سوال به سوال"];
                     if (worksheet == null)
                     {
-                        worksheet = excel.Workbook.Worksheets.Add(subjectName + " 2");
+                        worksheet = excel.Workbook.Worksheets.Add(subjectName + " سوال به سوال");
                         // do some styling
                         worksheet.Cells[1, 1].Value = "عنوان";
                         worksheet.Cells[2, 1].Value = "شماره";
@@ -346,7 +346,7 @@ namespace SanjeshFetcher
                 // Final styling for question specific sheets
                 foreach (var (title, _) in StudentHelpers.MathSubjects)
                 {
-                    var worksheet = excel.Workbook.Worksheets[title + " 2"];
+                    var worksheet = excel.Workbook.Worksheets[title + " سوال به سوال"];
                     // Do coloring
                     worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
                     worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
@@ -439,7 +439,7 @@ namespace SanjeshFetcher
                 // Create each subject
                 foreach (var (title, ranges) in StudentHelpers.TajrobiSubjects)
                 {
-                    var worksheet = excel.Workbook.Worksheets.Add(title + " 1");
+                    var worksheet = excel.Workbook.Worksheets.Add(title + " موضوعی");
                     worksheet.View.RightToLeft = true;
                     worksheet.Column(1).Width = 27.5d;
                     // Setup the header
@@ -571,10 +571,10 @@ namespace SanjeshFetcher
                         continue;
                     }
 
-                    ExcelWorksheet worksheet = excel.Workbook.Worksheets[subjectName + " 2"];
+                    ExcelWorksheet worksheet = excel.Workbook.Worksheets[subjectName + " سوال به سوال"];
                     if (worksheet == null)
                     {
-                        worksheet = excel.Workbook.Worksheets.Add(subjectName + " 2");
+                        worksheet = excel.Workbook.Worksheets.Add(subjectName + " سوال به سوال");
                         // do some styling
                         worksheet.Cells[1, 1].Value = "عنوان";
                         worksheet.Cells[2, 1].Value = "شماره";
@@ -640,7 +640,7 @@ namespace SanjeshFetcher
                 // Final styling for question specific sheets
                 foreach (var (title, _) in StudentHelpers.TajrobiSubjects)
                 {
-                    var worksheet = excel.Workbook.Worksheets[title + " 2"];
+                    var worksheet = excel.Workbook.Worksheets[title + " سوال به سوال"];
                     // Do coloring
                     worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
                     worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
