@@ -94,19 +94,29 @@ namespace SanjeshFetcher
             /// </summary>
             public string EkhtesasiCode;
         }
-
+        /// <summary>
+        /// The url to login page
+        /// </summary>
         private const string MainResultUrl =
             "http://srv2.sanjesh.org/p_krn/index.php/krn_ntj_sar990629/sar_ntj1_99arm/krn/";
-
+        /// <summary>
+        /// The url to answer sheet page
+        /// </summary>
         private const string AnswerSheetUrl =
             "http://srv2.sanjesh.org/p_krn/index.php/krn_ntj_sar990629/sar_ntj1_99arm/krn/pasokh/";
-
+        /// <summary>
+        /// Data to post; Pre-formatted
+        /// </summary>
         private const string DataCompiled =
             "number_p={0}&c_rah={1}&id_number={2}&hidecod=127711917198&form=3&captcha=12557&submit22=%CC%D3%CA%CC%E6";
-
+        /// <summary>
+        /// Mimic chrome
+        /// </summary>
         private const string UserAgent =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36";
-
+        /// <summary>
+        /// The http client to download all data. Note that Sanjesh does not use cookies so we can use this in multitrhead situation
+        /// </summary>
         private static readonly HttpClient Client = new HttpClient();
 
         private const string HeaderOfExcel = "تحلیل کنکور 99 ";
@@ -114,14 +124,14 @@ namespace SanjeshFetcher
         {
             // Setup the client and start get results
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-            Client.DefaultRequestHeaders.Add("User-Agent", UserAgent);
+            Client.DefaultRequestHeaders.Add("User-Agent", UserAgent); // mimic chrome
             Client.DefaultRequestHeaders.Add("Referer", MainResultUrl);
             // Get the username and passwords from config
             ConcurrentBag<Student> students;
             {
                 var lines = File.ReadAllLines("students.txt");
-                students = new ConcurrentBag<Student>();
-                int i = 0;
+                students = new ConcurrentBag<Student>(); // orders does not matter
+                int i = 0; // for reporting progress
                 Parallel.ForEach(lines, (line) =>
                 {
                     Console.Write("\rFetching {0}%", (float)i / lines.Length * 100f);
@@ -200,7 +210,7 @@ namespace SanjeshFetcher
                         {
                             (_, int[] questions) = ranges[i];
                             int correct = 0, white = 0, mistake = 0;
-                            foreach (var question in questions) // TODO: maybe marge statics here?
+                            foreach (var question in questions)
                             {
                                 // also note question - 1
                                 if (student.Answers[question - 1] == 0) // check empty answer
@@ -256,6 +266,11 @@ namespace SanjeshFetcher
                     // Footer style
                     worksheet.Cells[rowCounter, 1, rowCounter, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
                     worksheet.Cells[rowCounter, 1, rowCounter, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
+                    worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Border.Top.Style = ExcelBorderStyle.Medium;
+                    worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Border.Left.Style = ExcelBorderStyle.Medium;
+                    // Add top border
+                    worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Border.Top.Style = ExcelBorderStyle.Medium;
+                    worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Border.Left.Style = ExcelBorderStyle.Medium;
                     // Center everything
                     worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                 }
@@ -365,6 +380,9 @@ namespace SanjeshFetcher
                         worksheet.Cells[2, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium; // title rows
                         worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium; // last row
                     }
+                    // Do special borders
+                    worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Border.Left.Style = ExcelBorderStyle.Medium;
+                    worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Border.Top.Style = ExcelBorderStyle.Medium;
                     // Do text alignment
                     worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                     worksheet.Cells.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
@@ -550,6 +568,9 @@ namespace SanjeshFetcher
                     // Footer style
                     worksheet.Cells[rowCounter, 1, rowCounter, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
                     worksheet.Cells[rowCounter, 1, rowCounter, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
+                    // Add top border
+                    worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Border.Top.Style = ExcelBorderStyle.Medium;
+                    worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Border.Left.Style = ExcelBorderStyle.Medium;
                     // Center everything
                     worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                 }
@@ -659,6 +680,9 @@ namespace SanjeshFetcher
                         worksheet.Cells[2, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium; // title rows
                         worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium; // last row
                     }
+                    // Add top border
+                    worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Border.Top.Style = ExcelBorderStyle.Medium;
+                    worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Border.Left.Style = ExcelBorderStyle.Medium;
                     // Do text alignment
                     worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                     worksheet.Cells.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
