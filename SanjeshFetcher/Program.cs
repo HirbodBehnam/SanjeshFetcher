@@ -19,7 +19,7 @@ namespace SanjeshFetcher
         /// <summary>
         /// The student struct
         /// </summary>
-        struct Student
+        private struct Student
         {
             /// <summary>
             /// True if student is a math
@@ -97,7 +97,7 @@ namespace SanjeshFetcher
         /// <summary>
         /// Students subject of study
         /// </summary>
-        enum StudentType
+        private enum StudentType
         {
             Math, Tajrobi, Ensani, Unknown
         }
@@ -120,7 +120,7 @@ namespace SanjeshFetcher
         /// Mimic chrome
         /// </summary>
         private const string UserAgent =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36";
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36";
         /// <summary>
         /// The http client to download all data. Note that Sanjesh does not use cookies so we can use this in multitrhead situation
         /// </summary>
@@ -128,7 +128,7 @@ namespace SanjeshFetcher
         /// <summary>
         /// All of the students
         /// </summary>
-        private static ConcurrentBag<Student> students;
+        private static ConcurrentBag<Student> _students;
         private const string HeaderOfExcel = "تحلیل کنکور 99 ";
         public static void Main(string[] args)
         {
@@ -139,7 +139,7 @@ namespace SanjeshFetcher
             // Get the username and passwords from config
             {
                 var lines = File.ReadAllLines("students.txt");
-                students = new ConcurrentBag<Student>(); // orders does not matter
+                _students = new ConcurrentBag<Student>(); // orders does not matter
                 int i = 0; // for reporting progress
                 Parallel.ForEach(lines, (line) =>
                 {
@@ -152,29 +152,29 @@ namespace SanjeshFetcher
                     } 
                     var student = GetStudentData(splitData[0], splitData[1], splitData[2]);
                     if (student.Answers != null) // check incorrect username
-                        students.Add(student);
+                        _students.Add(student);
                     i++;
                 });
                 Console.WriteLine("\rFetching Done");
             }
             // Calculate statics if there is at least one student of its type
-            if (students.Any(student => student.Type == StudentType.Math))
+            if (_students.Any(student => student.Type == StudentType.Math))
             {
                 Console.WriteLine("Doing calculations for math students...");
                 CreateExcel(StudentType.Math, StudentHelpers.MathSubjects, StudentHelpers.MathQuestions);
             }
-            if (students.Any(student => student.Type == StudentType.Tajrobi))
+            if (_students.Any(student => student.Type == StudentType.Tajrobi))
             {
                 Console.WriteLine("Doing calculations for tajrobi students...");
                 CreateExcel(StudentType.Tajrobi, StudentHelpers.TajrobiSubjects, StudentHelpers.TajrobiQuestions);
             }
-            if (students.Any(student => student.Type == StudentType.Ensani))
+            if (_students.Any(student => student.Type == StudentType.Ensani))
             {
                 Console.WriteLine("Doing calculations for ensani students...");
                 CreateExcel(StudentType.Ensani, StudentHelpers.EnsaniSubjects, StudentHelpers.EnsaniQuestions);
             }
             // Also output a json file for more details
-            File.WriteAllText("students.json",JsonConvert.SerializeObject(students.ToArray()));
+            File.WriteAllText("students.json",JsonConvert.SerializeObject(_students.ToArray()));
             Console.WriteLine("By Hirbod Behnam; AE High school");
         }
         /// <summary>
@@ -428,7 +428,7 @@ namespace SanjeshFetcher
                     }
                     // Add students
                     int rowCounter = 3; // start from row 3
-                    foreach (var student in students)
+                    foreach (var student in _students)
                     {
                         if (student.Type != type)
                             continue;
@@ -542,7 +542,7 @@ namespace SanjeshFetcher
                     }
                     // Get the statics
                     int correct = 0, white = 0, wrong = 0;
-                    foreach (var student in students)
+                    foreach (var student in _students)
                     {
                         if (student.Type != type) // ignore non math students
                             continue;
@@ -634,7 +634,7 @@ namespace SanjeshFetcher
                     worksheet.Cells[1, columnCounter + 3].Value = "رتبه سهمیه";
                     // Add students
                     int rowCounter = 2;
-                    foreach (var student in students)
+                    foreach (var student in _students)
                     {
                         if (student.Type != type)
                             continue;
@@ -678,7 +678,6 @@ namespace SanjeshFetcher
                 excel.Save();
             }
         }
-
         /// <summary>
         /// Converts <see cref="StudentType"/> to a persian string
         /// </summary>
