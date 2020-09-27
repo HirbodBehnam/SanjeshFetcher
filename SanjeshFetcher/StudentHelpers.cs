@@ -294,6 +294,103 @@ namespace SanjeshFetcher
             Tuple.Create("فیزیک", TajrobiPhysicsPositions),
             Tuple.Create("شیمی", TajrobiChemistryPositions),
         };
+
+        /// <summary>
+        /// Defines the headers of the literature answers for ensani students; It is identical to math question positions
+        /// </summary>
+        public static readonly Tuple<string, int[]>[] EnsaniLiteraturePositions =
+        {
+            Tuple.Create("معنی لغت",Range(1,3)),
+            Tuple.Create("املا",Range(4,6)),
+            Tuple.Create("تاریخ ادبیات",new []{7}),
+            Tuple.Create("آرایه",Range(8,11)),
+            Tuple.Create("زبان فارسی",Range(12,16)),
+            Tuple.Create("قرابت معنایی",Range(17,25)),
+            Tuple.Create("ادبیات فارسی",Range(1,25)),
+        };
+        /// <summary>
+        /// Defines the headers of the arabic answers for ensani students; It's like math students as well
+        /// </summary>
+        public static readonly Tuple<string, int[]>[] EnsaniArabicPositions =
+        {
+            Tuple.Create("ترجمه", Range(26,34)),
+            Tuple.Create("تعریب", Range(35,35)),
+            Tuple.Create("درک مطلب", Range(36,39)),
+            Tuple.Create("تحلیل صرفی", Range(40,42)),
+            Tuple.Create("ضبط حرکات", Range(43,43)),
+            Tuple.Create("قواعد", Range(44,50)),
+            Tuple.Create("زبان عربی", Range(26,50)),
+        };
+        /// <summary>
+        /// Defines the headers of the religion answers for ensani students
+        /// </summary>
+        public static readonly Tuple<string, int[]>[] EnsaniDiniPositions =
+        {
+            Tuple.Create("دینی", Range(51,75)),
+        };
+        /// <summary>
+        /// Defines the headers of the english answers for ensani students; Just like math students
+        /// </summary>
+        public static readonly Tuple<string, int[]>[] EnsaniEnglishPositions = {
+            Tuple.Create("گرامر", Range(76,79)),
+            Tuple.Create("لغات", Range(80,87)),
+            Tuple.Create("کلوز", Range(88,92)),
+            Tuple.Create("درک مطلب اول", Range(93,96)),
+            Tuple.Create("درک مطلب دوم", Range(97,100)),
+            Tuple.Create("زبان انگلیسی", Range(76,100)),
+        };
+        public static readonly Tuple<string, int[]>[] EnsaniMathPositions =
+        {
+            Tuple.Create("ریاضی", Range(101,120)),
+        };
+        public static readonly Tuple<string, int[]>[] EnsaniEconomyPositions =
+        {
+            Tuple.Create("اقتصاد", Range(121,135)),
+        };
+        public static readonly Tuple<string, int[]>[] EnsaniLiterature2Positions =
+        {
+            Tuple.Create("ادبیات تخصصی", Range(136,165)),
+        };
+        public static readonly Tuple<string, int[]>[] EnsaniArabic2Positions =
+        {
+            Tuple.Create("عربی تخصصی", Range(166,185)),
+        };
+        public static readonly Tuple<string, int[]>[] EnsaniHistoryGeographyPositions =
+        {
+            Tuple.Create("تاریخ", Range(186,200)),
+            Tuple.Create("جغرافیا", Range(201,215)),
+            Tuple.Create("تاریخ و جغرافیا", Range(186,215)),
+        };
+        public static readonly Tuple<string, int[]>[] EnsaniSocialPositions =
+        {
+            Tuple.Create("علوم اجتماعی", Range(216,235)),
+        };
+        public static readonly Tuple<string, int[]>[] EnsaniPhilosophyPositions =
+        {
+            Tuple.Create("فلسفه", Range(236,260)),
+        };
+        public static readonly Tuple<string, int[]>[] EnsaniPsychologyPositions =
+        {
+            Tuple.Create("روان شناسی", Range(261,280)),
+        };
+
+        public static readonly Tuple<string, Tuple<string, int[]>[]>[] EnsaniSubjects =
+        {
+            // omoomi
+            Tuple.Create("ادبیات", EnsaniLiteraturePositions),
+            Tuple.Create("عربی", EnsaniArabicPositions),
+            Tuple.Create("دینی", EnsaniDiniPositions),
+            Tuple.Create("زبان", EnsaniEnglishPositions),
+            // ekhtesasi
+            Tuple.Create("ریاضیات", EnsaniMathPositions),
+            Tuple.Create("اقتصاد", EnsaniEconomyPositions),
+            Tuple.Create("ادبیات تخصصی", EnsaniLiterature2Positions),
+            Tuple.Create("عربی تخصصی", EnsaniArabic2Positions),
+            Tuple.Create("تاریخ و جغرافیا", EnsaniHistoryGeographyPositions),
+            Tuple.Create("علوم اجتماعی", EnsaniSocialPositions),
+            Tuple.Create("فلسفه", EnsaniPhilosophyPositions),
+            Tuple.Create("روانشناسی", EnsaniPsychologyPositions),
+        };
         /// <summary>
         /// Total number of questions in math exam
         /// </summary>
@@ -302,5 +399,9 @@ namespace SanjeshFetcher
         /// Total number of tajrobi questions in exam
         /// </summary>
         public const int TajrobiQuestions = 270;
+        /// <summary>
+        /// Total numbers of ensani questions in exam
+        /// </summary>
+        public const int EnsaniQuestions = 280;
     }
 }
