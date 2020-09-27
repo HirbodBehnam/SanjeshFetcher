@@ -648,7 +648,7 @@ namespace SanjeshFetcher
                         if (student.RankSpecialOverall == 0)
                             worksheet.Cells[rowCounter, student.Grades.Length + 5].Value = "-";
                         else
-                            worksheet.Cells[rowCounter, student.Grades.Length + 6].Value = student.RankSpecialOverall;
+                            worksheet.Cells[rowCounter, student.Grades.Length + 5].Value = student.RankSpecialOverall;
                         // add to row counter
                         rowCounter++;
                     }
