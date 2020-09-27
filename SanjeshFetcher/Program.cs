@@ -6,7 +6,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using System.Xml.Schema;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
 using OfficeOpenXml;
@@ -158,919 +157,22 @@ namespace SanjeshFetcher
                 });
                 Console.WriteLine("\rFetching Done");
             }
-            // Now do some statics stuff for math students
-            
+            // Calculate statics if there is at least one student of its type
             if (students.Any(student => student.Type == StudentType.Math))
             {
                 Console.WriteLine("Doing calculations for math students...");
-                using (var excel = new ExcelPackage(new FileInfo("ریاضی.xlsx")))
-                {
-                    // Create each subject
-                    foreach (var (title, ranges) in StudentHelpers.MathSubjects)
-                    {
-                        var worksheet = excel.Workbook.Worksheets.Add(title + " موضوعی");
-                        worksheet.View.RightToLeft = true;
-                        worksheet.Column(1).Width = 27.5d;
-                        // Setup the header
-                        {
-                            worksheet.Cells["A1"].Value = HeaderOfExcel + title;
-                            worksheet.Cells["A1:D1"].Merge = true;
-                            worksheet.Cells["A2"].Value = "نام و نام خانوادگی";
-                            worksheet.Cells["B2"].Value = "رشته";
-                            worksheet.Cells["C2"].Value = "جنس";
-                            worksheet.Cells["D2"].Value = "کد";
-                        }
-                        // Add header of sub-subjects
-                        for (int i = 0; i < ranges.Length; i++)
-                        {
-                            (string subStat, _) = ranges[i];
-                            // Add header
-                            worksheet.Cells[1, 4 * i + 5, 1, 4 * i + 8].Merge = true;
-                            worksheet.Cells[1, 4 * i + 5].Value = subStat;
-                            worksheet.Cells[1, 4 * i + 5, 1, 4 * i + 8].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[1, 4 * i + 5, 1, 4 * i + 8].Style.Border.Left.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[1, 4 * i + 5, 1, 4 * i + 8].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                            // Add const of "سفید" & ...
-                            worksheet.Cells[2, 4 * i + 5].Value = "صحیح";
-                            worksheet.Cells[2, 4 * i + 5].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[2, 4 * i + 5].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[2, 4 * i + 5].Style.Border.Left.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[2, 4 * i + 6].Value = "غلط";
-                            worksheet.Cells[2, 4 * i + 6].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[2, 4 * i + 6].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[2, 4 * i + 6].Style.Border.Left.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[2, 4 * i + 7].Value = "سفید";
-                            worksheet.Cells[2, 4 * i + 7].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[2, 4 * i + 7].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[2, 4 * i + 7].Style.Border.Left.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[2, 4 * i + 8].Value = "درصد";
-                            worksheet.Cells[2, 4 * i + 8].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[2, 4 * i + 8].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                        }
-                        // Add students
-                        int rowCounter = 3; // start from row 3
-                        foreach (var student in students)
-                        {
-                            if (student.Type != StudentType.Math)
-                                continue;
-                            // Add normal info
-                            worksheet.Cells[rowCounter, 1].Value = student.Name;
-                            worksheet.Cells[rowCounter, 2].Value = "ریاضی";
-                            worksheet.Cells[rowCounter, 3].Value = student.IsMale ? "مرد" : "زن";
-                            worksheet.Cells[rowCounter, 4].Value = student.Parvande;
-                            // Add subjects info
-                            for (int i = 0; i < ranges.Length; i++)
-                            {
-                                (_, int[] questions) = ranges[i];
-                                int correct = 0, white = 0, mistake = 0;
-                                foreach (var question in questions)
-                                {
-                                    // also note question - 1
-                                    if (student.Answers[question - 1] == 0) // check empty answer
-                                        white++;
-                                    else if (student.Answers[question - 1] == student.AnswersKey[question - 1])
-                                        correct++;
-                                    else
-                                        mistake++;
-                                }
-                                worksheet.Cells[rowCounter, 4 * i + 5].Value = correct;
-                                worksheet.Cells[rowCounter, 4 * i + 6].Value = mistake;
-                                worksheet.Cells[rowCounter, 4 * i + 7].Value = white;
-                                worksheet.Cells[rowCounter, 4 * i + 8].Formula = ExcelFormula.SubjectFormula;
-                                // styling
-                                for (int j = 0; j < 4; j++)
-                                    worksheet.Cells[rowCounter, 4 * i + 5 + j].Style.Border.BorderAround(ExcelBorderStyle.Thin);
-                                worksheet.Cells[rowCounter, 4 * i + 8].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                                worksheet.Cells[rowCounter, 4 * i + 5].Style.Border.Left.Style = ExcelBorderStyle.Medium;
-                            }
-                            // Add a row to row counter
-                            rowCounter++;
-                        }
-                        // Add average
-                        worksheet.Cells[rowCounter, 1].Value = "میانگین";
-                        worksheet.Cells[rowCounter, 2].Value = "ریاضی";
-                        worksheet.Cells[rowCounter, 3].Value = "-";
-                        worksheet.Cells[rowCounter, 4].Value = "-";
-                        for (int i = 5; i <= worksheet.Dimension.Columns; i++) // note that it must be <=
-                            worksheet.Cells[rowCounter, i].Formula = ExcelFormula.AverageBottomFormula;
-                        // Do styling
-                        // Add borders to some headers; Note that these must be added at last to override other borders of the other cells
-                        worksheet.Cells[1, 1, 1, 4].Style.Border.BorderAround(ExcelBorderStyle.Medium);
-                        for (int i = 1; i <= 4; i++) // add for second row
-                            worksheet.Cells[2, i].Style.Border.BorderAround(ExcelBorderStyle.Medium);
-                        for (int i = 3; i <= worksheet.Dimension.Rows; i++) // add for names and average
-                        {
-                            for (int j = 1; j <= 4; j++)
-                                worksheet.Cells[i, j].Style.Border.BorderAround(ExcelBorderStyle.Thin);
-                            worksheet.Cells[i, 4].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                        }
-                        for (int i = 1; i <= worksheet.Dimension.Columns; i++) // Footer (average)
-                        {
-                            worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Top.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                            if (i % 4 == 0) // Note that there is no need for checking the (i % 4 == 1) and editing the left side
-                                worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Right.Style =
-                                    ExcelBorderStyle.Medium;
-                        }
-                        //worksheet.Cells.Style.Border.BorderAround(ExcelBorderStyle.Thin); 
-                        worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        // Footer style
-                        worksheet.Cells[rowCounter, 1, rowCounter, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[rowCounter, 1, rowCounter, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Border.Top.Style = ExcelBorderStyle.Medium;
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Border.Left.Style = ExcelBorderStyle.Medium;
-                        // Add top border
-                        worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Border.Top.Style = ExcelBorderStyle.Medium;
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Border.Left.Style = ExcelBorderStyle.Medium;
-                        // Center everything
-                        worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                    }
-                    // Create question specific sheets
-                    for (int qIndex = 0; qIndex < StudentHelpers.MathQuestions; qIndex++) // Note 
-                    {
-                        // At first check where does this question belong
-                        string subjectName = "";
-                        foreach (var (title, ranges) in StudentHelpers.MathSubjects)
-                            if (ranges.Last().Item2.Contains(qIndex + 1)) // note qIndex + 1
-                            {
-                                subjectName = title;
-                                break;
-                            }
-
-                        if (subjectName == "")
-                        {
-                            Console.WriteLine("Error on getting subject name for question {0}", qIndex);
-                            continue;
-                        }
-
-                        ExcelWorksheet worksheet = excel.Workbook.Worksheets[subjectName + " سوال به سوال"];
-                        if (worksheet == null)
-                        {
-                            worksheet = excel.Workbook.Worksheets.Add(subjectName + " سوال به سوال");
-                            // do some styling
-                            worksheet.Cells[1, 1].Value = "عنوان";
-                            worksheet.Cells[2, 1].Value = "شماره";
-                            worksheet.Cells[3, 1].Value = "تعداد گزینه صحیح";
-                            worksheet.Cells[4, 1].Value = "درصد گزینه صحیح";
-                            worksheet.Cells[5, 1].Value = "تعداد گزینه اشتباه";
-                            worksheet.Cells[6, 1].Value = "درصد گزینه اشتباه";
-                            worksheet.Cells[7, 1].Value = "تعداد گزینه سفید";
-                            worksheet.Cells[8, 1].Value = "درصد گزینه سفید";
-                            worksheet.Cells[9, 1].Value = "درصد سوال";
-
-                            worksheet.Column(1).Width = 15d;
-                            worksheet.Row(1).Height = 150d;
-
-                            worksheet.View.RightToLeft = true;
-                        }
-                        // Get the statics
-                        int correct = 0, white = 0, wrong = 0;
-                        foreach (var student in students)
-                        {
-                            if (student.Type != StudentType.Math) // ignore non math students
-                                continue;
-                            if (student.Answers[qIndex] == 0) // question is white
-                                white++;
-                            else if (student.Answers[qIndex] == student.AnswersKey[qIndex]) // correct answer
-                                correct++;
-                            else // wrong answer
-                                wrong++;
-                        }
-                        // Fill the style sheet
-                        // Get the title
-                        string questionTitle = subjectName;
-                        foreach (var (name, ranges) in StudentHelpers.MathSubjects)
-                        {
-                            // ReSharper disable once InvertIf Do not check other subjects
-                            if (name == subjectName)
-                            {
-                                foreach (var (candidateTitle, range) in ranges)
-                                {
-                                    // ReSharper disable once InvertIf We must not check other titles
-                                    if (range.Contains(qIndex + 1))
-                                    {
-                                        questionTitle = candidateTitle;
-                                        break;
-                                    }
-                                }
-                                break;
-                            }
-                        }
-                        // Now fill the sheet
-                        int column = worksheet.Dimension.Columns + 1;
-                        worksheet.Cells[1, column].Value = questionTitle;
-                        worksheet.Cells[1, column].Style.TextRotation = 180;
-                        worksheet.Cells[2, column].Value = (qIndex + 1).ToString();
-                        worksheet.Cells[3, column].Value = correct;
-                        worksheet.Cells[4, column].Formula = ExcelFormula.QuestionsCorrectPercentage;
-                        worksheet.Cells[5, column].Value = wrong;
-                        worksheet.Cells[6, column].Formula = ExcelFormula.QuestionsWrongPercentage;
-                        worksheet.Cells[7, column].Value = white;
-                        worksheet.Cells[8, column].Formula = ExcelFormula.QuestionsWhitePercentage;
-                        worksheet.Cells[9, column].Formula = ExcelFormula.QuestionsPercentage;
-                    }
-                    // Final styling for question specific sheets
-                    foreach (var (title, _) in StudentHelpers.MathSubjects)
-                    {
-                        var worksheet = excel.Workbook.Worksheets[title + " سوال به سوال"];
-                        // Do coloring
-                        worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        // Do borders
-                        for (int i = 1; i <= worksheet.Dimension.Rows; i++)
-                            for (int j = 1; j <= worksheet.Dimension.Columns; j++)
-                            {
-                                worksheet.Cells[i, j].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                                worksheet.Cells[i, j].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                            }
-
-                        for (int i = 1; i <= worksheet.Dimension.Columns; i++)
-                        {
-                            worksheet.Cells[2, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium; // title rows
-                            worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium; // last row
-                        }
-                        // Do special borders
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Border.Left.Style = ExcelBorderStyle.Medium;
-                        worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Border.Top.Style = ExcelBorderStyle.Medium;
-                        // Do text alignment
-                        worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                        worksheet.Cells.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
-                    }
-                    // Create overall sheet
-                    {
-                        var worksheet = excel.Workbook.Worksheets.Add("نتایج کلی");
-                        worksheet.View.RightToLeft = true;
-                        worksheet.Column(1).Width = 27.5d; // names are big
-                                                           // Add headers
-                        worksheet.Cells[1, 1].Value = "نام و نام خانوادگی";
-                        worksheet.Cells[1, 2].Value = "ادبیات";
-                        worksheet.Cells[1, 3].Value = "عربی";
-                        worksheet.Cells[1, 4].Value = "دینی";
-                        worksheet.Cells[1, 5].Value = "زبان";
-                        worksheet.Cells[1, 6].Value = "ریاضی";
-                        worksheet.Cells[1, 7].Value = "فیزیک";
-                        worksheet.Cells[1, 8].Value = "شیمی";
-                        worksheet.Cells[1, 9].Value = "رتبه منطقه";
-                        worksheet.Cells[1, 10].Value = "رتبه کشور";
-                        worksheet.Cells[1, 11].Value = "تراز کل";
-                        worksheet.Cells[1, 12].Value = "رتبه سهمیه";
-                        // Add students
-                        int rowCounter = 2;
-                        foreach (var student in students)
-                        {
-                            if (student.Type != StudentType.Math)
-                                continue;
-                            // Add data
-                            worksheet.Cells[rowCounter, 1].Value = student.Name;
-                            for (int i = 0; i < student.Grades.Length; i++)
-                                worksheet.Cells[rowCounter, i + 2].Value = student.Grades[i];
-                            worksheet.Cells[rowCounter, 9].Value = student.RankOverall;
-                            worksheet.Cells[rowCounter, 10].Value = student.RankCountryOverall;
-                            worksheet.Cells[rowCounter, 11].Value = student.NormalizedScoreOverall;
-                            if (student.RankSpecialOverall == 0)
-                                worksheet.Cells[rowCounter, 12].Value = "-";
-                            else
-                                worksheet.Cells[rowCounter, 12].Value = student.RankSpecialOverall;
-                            // add to row counter
-                            rowCounter++;
-                        }
-                        // Do styling
-                        worksheet.Cells[1, 1, 1, 12].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[1, 1, 1, 12].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        // Draw some borders
-                        for (int i = 1; i <= worksheet.Dimension.Rows; i++)
-                        {
-                            worksheet.Cells[i, 1].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[i, 1].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                        }
-                        for (int i = 1; i <= worksheet.Dimension.Columns; i++)
-                        {
-                            worksheet.Cells[1, i].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[1, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                        }
-                        for (int i = 2; i <= worksheet.Dimension.Rows; i++)
-                            for (int j = 2; j <= worksheet.Dimension.Columns; j++)
-                            {
-                                worksheet.Cells[i, j].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                                worksheet.Cells[i, j].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                            }
-                    }
-                    excel.Save();
-                }
+                CreateExcel(StudentType.Math, StudentHelpers.MathSubjects, StudentHelpers.MathQuestions);
             }
-            // Do it again for tajrobi students
             if (students.Any(student => student.Type == StudentType.Tajrobi))
             {
                 Console.WriteLine("Doing calculations for tajrobi students...");
-                using (var excel = new ExcelPackage(new FileInfo("تجربی.xlsx")))
-                {
-                    // Create each subject
-                    foreach (var (title, ranges) in StudentHelpers.TajrobiSubjects)
-                    {
-                        var worksheet = excel.Workbook.Worksheets.Add(title + " موضوعی");
-                        worksheet.View.RightToLeft = true;
-                        worksheet.Column(1).Width = 27.5d;
-                        // Setup the header
-                        {
-                            worksheet.Cells["A1"].Value = HeaderOfExcel + title;
-                            worksheet.Cells["A1:D1"].Merge = true;
-                            worksheet.Cells["A2"].Value = "نام و نام خانوادگی";
-                            worksheet.Cells["B2"].Value = "رشته";
-                            worksheet.Cells["C2"].Value = "جنس";
-                            worksheet.Cells["D2"].Value = "کد";
-                        }
-                        // Add header of sub-subjects
-                        for (int i = 0; i < ranges.Length; i++)
-                        {
-                            (string subStat, _) = ranges[i];
-                            // Add header
-                            worksheet.Cells[1, 4 * i + 5, 1, 4 * i + 8].Merge = true;
-                            worksheet.Cells[1, 4 * i + 5].Value = subStat;
-                            worksheet.Cells[1, 4 * i + 5, 1, 4 * i + 8].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[1, 4 * i + 5, 1, 4 * i + 8].Style.Border.Left.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[1, 4 * i + 5, 1, 4 * i + 8].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                            // Add const of "سفید" & ...
-                            worksheet.Cells[2, 4 * i + 5].Value = "صحیح";
-                            worksheet.Cells[2, 4 * i + 5].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[2, 4 * i + 5].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[2, 4 * i + 5].Style.Border.Left.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[2, 4 * i + 6].Value = "غلط";
-                            worksheet.Cells[2, 4 * i + 6].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[2, 4 * i + 6].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[2, 4 * i + 6].Style.Border.Left.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[2, 4 * i + 7].Value = "سفید";
-                            worksheet.Cells[2, 4 * i + 7].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[2, 4 * i + 7].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[2, 4 * i + 7].Style.Border.Left.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[2, 4 * i + 8].Value = "درصد";
-                            worksheet.Cells[2, 4 * i + 8].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[2, 4 * i + 8].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                        }
-                        // Add students
-                        int rowCounter = 3; // start from row 3
-                        foreach (var student in students)
-                        {
-                            if (student.Type != StudentType.Tajrobi)
-                                continue;
-                            // Add normal info
-                            worksheet.Cells[rowCounter, 1].Value = student.Name;
-                            worksheet.Cells[rowCounter, 2].Value = "تجربی";
-                            worksheet.Cells[rowCounter, 3].Value = student.IsMale ? "مرد" : "زن";
-                            worksheet.Cells[rowCounter, 4].Value = student.Parvande;
-                            // Add subjects info
-                            for (int i = 0; i < ranges.Length; i++)
-                            {
-                                (_, int[] questions) = ranges[i];
-                                int correct = 0, white = 0, mistake = 0;
-                                foreach (var question in questions) // TODO: maybe marge statics here?
-                                {
-                                    // also note question - 1
-                                    if (student.Answers[question - 1] == 0) // check empty answer
-                                        white++;
-                                    else if (student.Answers[question - 1] == student.AnswersKey[question - 1])
-                                        correct++;
-                                    else
-                                        mistake++;
-                                }
-                                worksheet.Cells[rowCounter, 4 * i + 5].Value = correct;
-                                worksheet.Cells[rowCounter, 4 * i + 6].Value = mistake;
-                                worksheet.Cells[rowCounter, 4 * i + 7].Value = white;
-                                worksheet.Cells[rowCounter, 4 * i + 8].Formula = ExcelFormula.SubjectFormula;
-                                // styling
-                                for (int j = 0; j < 4; j++)
-                                    worksheet.Cells[rowCounter, 4 * i + 5 + j].Style.Border.BorderAround(ExcelBorderStyle.Thin);
-                                worksheet.Cells[rowCounter, 4 * i + 8].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                                worksheet.Cells[rowCounter, 4 * i + 5].Style.Border.Left.Style = ExcelBorderStyle.Medium;
-                            }
-                            // Add a row to row counter
-                            rowCounter++;
-                        }
-                        // Add average
-                        worksheet.Cells[rowCounter, 1].Value = "میانگین";
-                        worksheet.Cells[rowCounter, 2].Value = "تجربی";
-                        worksheet.Cells[rowCounter, 3].Value = "-";
-                        worksheet.Cells[rowCounter, 4].Value = "-";
-                        for (int i = 5; i <= worksheet.Dimension.Columns; i++) // note that it must be <=
-                            worksheet.Cells[rowCounter, i].Formula = ExcelFormula.AverageBottomFormula;
-                        // Do styling
-                        // Add borders to some headers; Note that these must be added at last to override other borders of the other cells
-                        worksheet.Cells[1, 1, 1, 4].Style.Border.BorderAround(ExcelBorderStyle.Medium);
-                        for (int i = 1; i <= 4; i++) // add for second row
-                            worksheet.Cells[2, i].Style.Border.BorderAround(ExcelBorderStyle.Medium);
-                        for (int i = 3; i <= worksheet.Dimension.Rows; i++) // add for names and average
-                        {
-                            for (int j = 1; j <= 4; j++)
-                                worksheet.Cells[i, j].Style.Border.BorderAround(ExcelBorderStyle.Thin);
-                            worksheet.Cells[i, 4].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                        }
-                        for (int i = 1; i <= worksheet.Dimension.Columns; i++) // Footer (average)
-                        {
-                            worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Top.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                            if (i % 4 == 0) // Note that there is no need for checking the (i % 4 == 1) and editing the left side
-                                worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Right.Style =
-                                    ExcelBorderStyle.Medium;
-                        }
-                        //worksheet.Cells.Style.Border.BorderAround(ExcelBorderStyle.Thin); 
-                        worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        // Footer style
-                        worksheet.Cells[rowCounter, 1, rowCounter, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[rowCounter, 1, rowCounter, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        // Add top border
-                        worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Border.Top.Style = ExcelBorderStyle.Medium;
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Border.Left.Style = ExcelBorderStyle.Medium;
-                        // Center everything
-                        worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                    }
-                    // Create question specific sheets
-                    for (int qIndex = 0; qIndex < StudentHelpers.TajrobiQuestions; qIndex++) // Note 
-                    {
-                        // At first check where does this question belong
-                        string subjectName = "";
-                        foreach (var (title, ranges) in StudentHelpers.TajrobiSubjects)
-                            if (ranges.Last().Item2.Contains(qIndex + 1)) // note qIndex + 1
-                            {
-                                subjectName = title;
-                                break;
-                            }
-
-                        if (subjectName == "")
-                        {
-                            Console.WriteLine("Error on getting subject name for question {0}", qIndex);
-                            continue;
-                        }
-
-                        ExcelWorksheet worksheet = excel.Workbook.Worksheets[subjectName + " سوال به سوال"];
-                        if (worksheet == null)
-                        {
-                            worksheet = excel.Workbook.Worksheets.Add(subjectName + " سوال به سوال");
-                            // do some styling
-                            worksheet.Cells[1, 1].Value = "عنوان";
-                            worksheet.Cells[2, 1].Value = "شماره";
-                            worksheet.Cells[3, 1].Value = "تعداد گزینه صحیح";
-                            worksheet.Cells[4, 1].Value = "درصد گزینه صحیح";
-                            worksheet.Cells[5, 1].Value = "تعداد گزینه اشتباه";
-                            worksheet.Cells[6, 1].Value = "درصد گزینه اشتباه";
-                            worksheet.Cells[7, 1].Value = "تعداد گزینه سفید";
-                            worksheet.Cells[8, 1].Value = "درصد گزینه سفید";
-                            worksheet.Cells[9, 1].Value = "درصد سوال";
-
-                            worksheet.Column(1).Width = 15d;
-                            worksheet.Row(1).Height = 150d;
-
-                            worksheet.View.RightToLeft = true;
-                        }
-                        // Get the statics
-                        int correct = 0, white = 0, wrong = 0;
-                        foreach (var student in students)
-                        {
-                            if (student.Type != StudentType.Tajrobi) // ignore non math students
-                                continue;
-                            if (student.Answers[qIndex] == 0) // question is white
-                                white++;
-                            else if (student.Answers[qIndex] == student.AnswersKey[qIndex]) // correct answer
-                                correct++;
-                            else // wrong answer
-                                wrong++;
-                        }
-                        // Fill the style sheet
-                        // Get the title
-                        string questionTitle = subjectName;
-                        foreach (var (name, ranges) in StudentHelpers.TajrobiSubjects)
-                        {
-                            // ReSharper disable once InvertIf Do not check other subjects
-                            if (name == subjectName)
-                            {
-                                foreach (var (candidateTitle, range) in ranges)
-                                {
-                                    // ReSharper disable once InvertIf We must not check other titles
-                                    if (range.Contains(qIndex + 1))
-                                    {
-                                        questionTitle = candidateTitle;
-                                        break;
-                                    }
-                                }
-                                break;
-                            }
-                        }
-                        // Now fill the sheet
-                        int column = worksheet.Dimension.Columns + 1;
-                        worksheet.Cells[1, column].Value = questionTitle;
-                        worksheet.Cells[1, column].Style.TextRotation = 180;
-                        worksheet.Cells[2, column].Value = (qIndex + 1).ToString();
-                        worksheet.Cells[3, column].Value = correct;
-                        worksheet.Cells[4, column].Formula = ExcelFormula.QuestionsCorrectPercentage;
-                        worksheet.Cells[5, column].Value = wrong;
-                        worksheet.Cells[6, column].Formula = ExcelFormula.QuestionsWrongPercentage;
-                        worksheet.Cells[7, column].Value = white;
-                        worksheet.Cells[8, column].Formula = ExcelFormula.QuestionsWhitePercentage;
-                        worksheet.Cells[9, column].Formula = ExcelFormula.QuestionsPercentage;
-                    }
-                    // Final styling for question specific sheets
-                    foreach (var (title, _) in StudentHelpers.TajrobiSubjects)
-                    {
-                        var worksheet = excel.Workbook.Worksheets[title + " سوال به سوال"];
-                        // Do coloring
-                        worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        // Do borders
-                        for (int i = 1; i <= worksheet.Dimension.Rows; i++)
-                            for (int j = 1; j <= worksheet.Dimension.Columns; j++)
-                            {
-                                worksheet.Cells[i, j].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                                worksheet.Cells[i, j].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                            }
-
-                        for (int i = 1; i <= worksheet.Dimension.Columns; i++)
-                        {
-                            worksheet.Cells[2, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium; // title rows
-                            worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium; // last row
-                        }
-                        // Add top border
-                        worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Border.Top.Style = ExcelBorderStyle.Medium;
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Border.Left.Style = ExcelBorderStyle.Medium;
-                        // Do text alignment
-                        worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                        worksheet.Cells.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
-                    }
-                    // Create overall sheet
-                    {
-                        var worksheet = excel.Workbook.Worksheets.Add("نتایج کلی");
-                        worksheet.View.RightToLeft = true;
-                        worksheet.Column(1).Width = 27.5d; // names are big
-                                                           // Add headers
-                        worksheet.Cells[1, 1].Value = "نام و نام خانوادگی";
-                        worksheet.Cells[1, 2].Value = "ادبیات";
-                        worksheet.Cells[1, 3].Value = "عربی";
-                        worksheet.Cells[1, 4].Value = "دینی";
-                        worksheet.Cells[1, 5].Value = "زبان";
-                        worksheet.Cells[1, 6].Value = "زمین شناسی";
-                        worksheet.Cells[1, 7].Value = "ریاضی";
-                        worksheet.Cells[1, 8].Value = "زیست شناسی";
-                        worksheet.Cells[1, 9].Value = "فیزیک";
-                        worksheet.Cells[1, 10].Value = "شیمی";
-                        worksheet.Cells[1, 11].Value = "رتبه منطقه";
-                        worksheet.Cells[1, 12].Value = "رتبه کشور";
-                        worksheet.Cells[1, 13].Value = "تراز کل";
-                        worksheet.Cells[1, 14].Value = "رتبه سهمیه";
-                        // Add students
-                        int rowCounter = 2;
-                        foreach (var student in students)
-                        {
-                            if (student.Type != StudentType.Tajrobi)
-                                continue;
-                            // Add data
-                            worksheet.Cells[rowCounter, 1].Value = student.Name;
-                            for (int i = 0; i < student.Grades.Length; i++)
-                                worksheet.Cells[rowCounter, i + 2].Value = student.Grades[i];
-                            worksheet.Cells[rowCounter, 11].Value = student.RankOverall;
-                            worksheet.Cells[rowCounter, 12].Value = student.RankCountryOverall;
-                            worksheet.Cells[rowCounter, 13].Value = student.NormalizedScoreOverall;
-                            if (student.RankSpecialOverall == 0)
-                                worksheet.Cells[rowCounter, 14].Value = "-";
-                            else
-                                worksheet.Cells[rowCounter, 14].Value = student.RankSpecialOverall;
-                            // add to row counter
-                            rowCounter++;
-                        }
-                        // Do styling
-                        worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        // Draw some borders
-                        for (int i = 1; i <= worksheet.Dimension.Rows; i++)
-                        {
-                            worksheet.Cells[i, 1].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[i, 1].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                        }
-                        for (int i = 1; i <= worksheet.Dimension.Columns; i++)
-                        {
-                            worksheet.Cells[1, i].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[1, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                        }
-                        for (int i = 2; i <= worksheet.Dimension.Rows; i++)
-                            for (int j = 2; j <= worksheet.Dimension.Columns; j++)
-                            {
-                                worksheet.Cells[i, j].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                                worksheet.Cells[i, j].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                            }
-                    }
-                    excel.Save();
-                }
+                CreateExcel(StudentType.Tajrobi, StudentHelpers.TajrobiSubjects, StudentHelpers.TajrobiQuestions);
             }
             if (students.Any(student => student.Type == StudentType.Ensani))
             {
                 Console.WriteLine("Doing calculations for ensani students...");
-                using (var excel = new ExcelPackage(new FileInfo("انسانی.xlsx")))
-                {
-                    // Create each subject
-                    foreach (var (title, ranges) in StudentHelpers.EnsaniSubjects)
-                    {
-                        var worksheet = excel.Workbook.Worksheets.Add(title + " موضوعی");
-                        worksheet.View.RightToLeft = true;
-                        worksheet.Column(1).Width = 27.5d;
-                        // Setup the header
-                        {
-                            worksheet.Cells["A1"].Value = HeaderOfExcel + title;
-                            worksheet.Cells["A1:D1"].Merge = true;
-                            worksheet.Cells["A2"].Value = "نام و نام خانوادگی";
-                            worksheet.Cells["B2"].Value = "رشته";
-                            worksheet.Cells["C2"].Value = "جنس";
-                            worksheet.Cells["D2"].Value = "کد";
-                        }
-                        // Add header of sub-subjects
-                        for (int i = 0; i < ranges.Length; i++)
-                        {
-                            (string subStat, _) = ranges[i];
-                            // Add header
-                            worksheet.Cells[1, 4 * i + 5, 1, 4 * i + 8].Merge = true;
-                            worksheet.Cells[1, 4 * i + 5].Value = subStat;
-                            worksheet.Cells[1, 4 * i + 5, 1, 4 * i + 8].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[1, 4 * i + 5, 1, 4 * i + 8].Style.Border.Left.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[1, 4 * i + 5, 1, 4 * i + 8].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                            // Add const of "سفید" & ...
-                            worksheet.Cells[2, 4 * i + 5].Value = "صحیح";
-                            worksheet.Cells[2, 4 * i + 5].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[2, 4 * i + 5].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[2, 4 * i + 5].Style.Border.Left.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[2, 4 * i + 6].Value = "غلط";
-                            worksheet.Cells[2, 4 * i + 6].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[2, 4 * i + 6].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[2, 4 * i + 6].Style.Border.Left.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[2, 4 * i + 7].Value = "سفید";
-                            worksheet.Cells[2, 4 * i + 7].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[2, 4 * i + 7].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[2, 4 * i + 7].Style.Border.Left.Style = ExcelBorderStyle.Thin;
-                            worksheet.Cells[2, 4 * i + 8].Value = "درصد";
-                            worksheet.Cells[2, 4 * i + 8].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[2, 4 * i + 8].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                        }
-                        // Add students
-                        int rowCounter = 3; // start from row 3
-                        foreach (var student in students)
-                        {
-                            if (student.Type != StudentType.Ensani)
-                                continue;
-                            // Add normal info
-                            worksheet.Cells[rowCounter, 1].Value = student.Name;
-                            worksheet.Cells[rowCounter, 2].Value = "انسانی";
-                            worksheet.Cells[rowCounter, 3].Value = student.IsMale ? "مرد" : "زن";
-                            worksheet.Cells[rowCounter, 4].Value = student.Parvande;
-                            // Add subjects info
-                            for (int i = 0; i < ranges.Length; i++)
-                            {
-                                (_, int[] questions) = ranges[i];
-                                int correct = 0, white = 0, mistake = 0;
-                                foreach (var question in questions) // TODO: maybe marge statics here?
-                                {
-                                    // also note question - 1
-                                    if (student.Answers[question - 1] == 0) // check empty answer
-                                        white++;
-                                    else if (student.Answers[question - 1] == student.AnswersKey[question - 1])
-                                        correct++;
-                                    else
-                                        mistake++;
-                                }
-                                worksheet.Cells[rowCounter, 4 * i + 5].Value = correct;
-                                worksheet.Cells[rowCounter, 4 * i + 6].Value = mistake;
-                                worksheet.Cells[rowCounter, 4 * i + 7].Value = white;
-                                worksheet.Cells[rowCounter, 4 * i + 8].Formula = ExcelFormula.SubjectFormula;
-                                // styling
-                                for (int j = 0; j < 4; j++)
-                                    worksheet.Cells[rowCounter, 4 * i + 5 + j].Style.Border.BorderAround(ExcelBorderStyle.Thin);
-                                worksheet.Cells[rowCounter, 4 * i + 8].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                                worksheet.Cells[rowCounter, 4 * i + 5].Style.Border.Left.Style = ExcelBorderStyle.Medium;
-                            }
-                            // Add a row to row counter
-                            rowCounter++;
-                        }
-                        // Add average
-                        worksheet.Cells[rowCounter, 1].Value = "میانگین";
-                        worksheet.Cells[rowCounter, 2].Value = "انسانی";
-                        worksheet.Cells[rowCounter, 3].Value = "-";
-                        worksheet.Cells[rowCounter, 4].Value = "-";
-                        for (int i = 5; i <= worksheet.Dimension.Columns; i++) // note that it must be <=
-                            worksheet.Cells[rowCounter, i].Formula = ExcelFormula.AverageBottomFormula;
-                        // Do styling
-                        // Add borders to some headers; Note that these must be added at last to override other borders of the other cells
-                        worksheet.Cells[1, 1, 1, 4].Style.Border.BorderAround(ExcelBorderStyle.Medium);
-                        for (int i = 1; i <= 4; i++) // add for second row
-                            worksheet.Cells[2, i].Style.Border.BorderAround(ExcelBorderStyle.Medium);
-                        for (int i = 3; i <= worksheet.Dimension.Rows; i++) // add for names and average
-                        {
-                            for (int j = 1; j <= 4; j++)
-                                worksheet.Cells[i, j].Style.Border.BorderAround(ExcelBorderStyle.Thin);
-                            worksheet.Cells[i, 4].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                        }
-                        for (int i = 1; i <= worksheet.Dimension.Columns; i++) // Footer (average)
-                        {
-                            worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Top.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                            if (i % 4 == 0) // Note that there is no need for checking the (i % 4 == 1) and editing the left side
-                                worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Right.Style =
-                                    ExcelBorderStyle.Medium;
-                        }
-                        //worksheet.Cells.Style.Border.BorderAround(ExcelBorderStyle.Thin); 
-                        worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        // Footer style
-                        worksheet.Cells[rowCounter, 1, rowCounter, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[rowCounter, 1, rowCounter, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        // Add top border
-                        worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Border.Top.Style = ExcelBorderStyle.Medium;
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Border.Left.Style = ExcelBorderStyle.Medium;
-                        // Center everything
-                        worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                    }
-                    // Create question specific sheets
-                    for (int qIndex = 0; qIndex < StudentHelpers.EnsaniQuestions; qIndex++) // Note 
-                    {
-                        // At first check where does this question belong
-                        string subjectName = "";
-                        foreach (var (title, ranges) in StudentHelpers.EnsaniSubjects)
-                            if (ranges.Last().Item2.Contains(qIndex + 1)) // note qIndex + 1
-                            {
-                                subjectName = title;
-                                break;
-                            }
-
-                        if (subjectName == "")
-                        {
-                            Console.WriteLine("Error on getting subject name for question {0}", qIndex);
-                            continue;
-                        }
-
-                        ExcelWorksheet worksheet = excel.Workbook.Worksheets[subjectName + " سوال به سوال"];
-                        if (worksheet == null)
-                        {
-                            worksheet = excel.Workbook.Worksheets.Add(subjectName + " سوال به سوال");
-                            // do some styling
-                            worksheet.Cells[1, 1].Value = "عنوان";
-                            worksheet.Cells[2, 1].Value = "شماره";
-                            worksheet.Cells[3, 1].Value = "تعداد گزینه صحیح";
-                            worksheet.Cells[4, 1].Value = "درصد گزینه صحیح";
-                            worksheet.Cells[5, 1].Value = "تعداد گزینه اشتباه";
-                            worksheet.Cells[6, 1].Value = "درصد گزینه اشتباه";
-                            worksheet.Cells[7, 1].Value = "تعداد گزینه سفید";
-                            worksheet.Cells[8, 1].Value = "درصد گزینه سفید";
-                            worksheet.Cells[9, 1].Value = "درصد سوال";
-
-                            worksheet.Column(1).Width = 15d;
-                            worksheet.Row(1).Height = 150d;
-
-                            worksheet.View.RightToLeft = true;
-                        }
-                        // Get the statics
-                        int correct = 0, white = 0, wrong = 0;
-                        foreach (var student in students)
-                        {
-                            if (student.Type != StudentType.Ensani) // ignore non math students
-                                continue;
-                            if (student.Answers[qIndex] == 0) // question is white
-                                white++;
-                            else if (student.Answers[qIndex] == student.AnswersKey[qIndex]) // correct answer
-                                correct++;
-                            else // wrong answer
-                                wrong++;
-                        }
-                        // Fill the style sheet
-                        // Get the title
-                        string questionTitle = subjectName;
-                        foreach (var (name, ranges) in StudentHelpers.EnsaniSubjects)
-                        {
-                            // ReSharper disable once InvertIf Do not check other subjects
-                            if (name == subjectName)
-                            {
-                                foreach (var (candidateTitle, range) in ranges)
-                                {
-                                    // ReSharper disable once InvertIf We must not check other titles
-                                    if (range.Contains(qIndex + 1))
-                                    {
-                                        questionTitle = candidateTitle;
-                                        break;
-                                    }
-                                }
-                                break;
-                            }
-                        }
-                        // Now fill the sheet
-                        int column = worksheet.Dimension.Columns + 1;
-                        worksheet.Cells[1, column].Value = questionTitle;
-                        worksheet.Cells[1, column].Style.TextRotation = 180;
-                        worksheet.Cells[2, column].Value = (qIndex + 1).ToString();
-                        worksheet.Cells[3, column].Value = correct;
-                        worksheet.Cells[4, column].Formula = ExcelFormula.QuestionsCorrectPercentage;
-                        worksheet.Cells[5, column].Value = wrong;
-                        worksheet.Cells[6, column].Formula = ExcelFormula.QuestionsWrongPercentage;
-                        worksheet.Cells[7, column].Value = white;
-                        worksheet.Cells[8, column].Formula = ExcelFormula.QuestionsWhitePercentage;
-                        worksheet.Cells[9, column].Formula = ExcelFormula.QuestionsPercentage;
-                    }
-                    // Final styling for question specific sheets
-                    foreach (var (title, _) in StudentHelpers.EnsaniSubjects)
-                    {
-                        var worksheet = excel.Workbook.Worksheets[title + " سوال به سوال"];
-                        // Do coloring
-                        worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        // Do borders
-                        for (int i = 1; i <= worksheet.Dimension.Rows; i++)
-                            for (int j = 1; j <= worksheet.Dimension.Columns; j++)
-                            {
-                                worksheet.Cells[i, j].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                                worksheet.Cells[i, j].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                            }
-
-                        for (int i = 1; i <= worksheet.Dimension.Columns; i++)
-                        {
-                            worksheet.Cells[2, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium; // title rows
-                            worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium; // last row
-                        }
-                        // Add top border
-                        worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Border.Top.Style = ExcelBorderStyle.Medium;
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Border.Left.Style = ExcelBorderStyle.Medium;
-                        // Do text alignment
-                        worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                        worksheet.Cells.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
-                    }
-                    // Create overall sheet
-                    {
-                        var worksheet = excel.Workbook.Worksheets.Add("نتایج کلی");
-                        worksheet.View.RightToLeft = true;
-                        worksheet.Column(1).Width = 27.5d; // names are big
-                        // Add headers
-                        worksheet.Cells[1, 1].Value = "نام و نام خانوادگی";
-                        int columnCounter = 2;
-                        foreach (var (subjectName, _) in StudentHelpers.EnsaniSubjects)
-                        {
-                            worksheet.Cells[1, columnCounter].Value = subjectName;
-                            columnCounter++;
-                        }
-                        worksheet.Cells[1, columnCounter].Value = "رتبه منطقه";
-                        worksheet.Cells[1, columnCounter + 1].Value = "رتبه کشور";
-                        worksheet.Cells[1, columnCounter + 2].Value = "تراز کل";
-                        worksheet.Cells[1, columnCounter + 3].Value = "رتبه سهمیه";
-                        // Add students
-                        int rowCounter = 2;
-                        foreach (var student in students)
-                        {
-                            if (student.Type != StudentType.Ensani)
-                                continue;
-                            // Add data
-                            worksheet.Cells[rowCounter, 1].Value = student.Name;
-                            for (int i = 0; i < student.Grades.Length; i++)
-                                worksheet.Cells[rowCounter, i + 2].Value = student.Grades[i];
-                            worksheet.Cells[rowCounter, student.Grades.Length + 2].Value = student.RankOverall;
-                            worksheet.Cells[rowCounter, student.Grades.Length + 3].Value = student.RankCountryOverall;
-                            worksheet.Cells[rowCounter, student.Grades.Length + 4].Value = student.NormalizedScoreOverall;
-                            if (student.RankSpecialOverall == 0)
-                                worksheet.Cells[rowCounter, student.Grades.Length + 5].Value = "-";
-                            else
-                                worksheet.Cells[rowCounter, student.Grades.Length + 6].Value = student.RankSpecialOverall;
-                            // add to row counter
-                            rowCounter++;
-                        }
-                        // Do styling
-                        worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
-                        // Draw some borders
-                        for (int i = 1; i <= worksheet.Dimension.Rows; i++)
-                        {
-                            worksheet.Cells[i, 1].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[i, 1].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                        }
-                        for (int i = 1; i <= worksheet.Dimension.Columns; i++)
-                        {
-                            worksheet.Cells[1, i].Style.Border.Right.Style = ExcelBorderStyle.Medium;
-                            worksheet.Cells[1, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                        }
-                        for (int i = 2; i <= worksheet.Dimension.Rows; i++)
-                            for (int j = 2; j <= worksheet.Dimension.Columns; j++)
-                            {
-                                worksheet.Cells[i, j].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                                worksheet.Cells[i, j].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                            }
-                    }
-                    excel.Save();
-                }
+                CreateExcel(StudentType.Ensani, StudentHelpers.EnsaniSubjects, StudentHelpers.EnsaniQuestions);
             }
-
             // Also output a json file for more details
             File.WriteAllText("students.json",JsonConvert.SerializeObject(students.ToArray()));
             Console.WriteLine("By Hirbod Behnam; AE High school");
@@ -1272,6 +374,311 @@ namespace SanjeshFetcher
             }
             return student;
         }
+        /// <summary>
+        /// Creates a excel for specific students
+        /// </summary>
+        /// <param name="type">Target student type</param>
+        /// <param name="subjectsAndRange">All of the subjects of these students that must contain ranges as well</param>
+        /// <param name="questionCount">Total number of questions</param>
+        private static void CreateExcel(StudentType type, Tuple<string, Tuple<string, int[]>[]>[] subjectsAndRange, int questionCount)
+        {
+            using (var excel = new ExcelPackage(new FileInfo(TypeToString(type) + ".xlsx")))
+            {
+                // Create each subject
+                foreach (var (title, ranges) in subjectsAndRange)
+                {
+                    var worksheet = excel.Workbook.Worksheets.Add(title + " موضوعی");
+                    worksheet.View.RightToLeft = true;
+                    worksheet.Column(1).Width = 27.5d;
+                    // Setup the header
+                    {
+                        worksheet.Cells["A1"].Value = HeaderOfExcel + title;
+                        worksheet.Cells["A1:D1"].Merge = true;
+                        worksheet.Cells["A2"].Value = "نام و نام خانوادگی";
+                        worksheet.Cells["B2"].Value = "رشته";
+                        worksheet.Cells["C2"].Value = "جنس";
+                        worksheet.Cells["D2"].Value = "کد";
+                    }
+                    // Add header of sub-subjects
+                    for (int i = 0; i < ranges.Length; i++)
+                    {
+                        (string subStat, _) = ranges[i];
+                        // Add header
+                        worksheet.Cells[1, 4 * i + 5, 1, 4 * i + 8].Merge = true;
+                        worksheet.Cells[1, 4 * i + 5].Value = subStat;
+                        worksheet.Cells[1, 4 * i + 5, 1, 4 * i + 8].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+                        worksheet.Cells[1, 4 * i + 5, 1, 4 * i + 8].Style.Border.Left.Style = ExcelBorderStyle.Medium;
+                        worksheet.Cells[1, 4 * i + 5, 1, 4 * i + 8].Style.Border.Right.Style = ExcelBorderStyle.Medium;
+                        // Add const of "سفید" & ...
+                        worksheet.Cells[2, 4 * i + 5].Value = "صحیح";
+                        worksheet.Cells[2, 4 * i + 5].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
+                        worksheet.Cells[2, 4 * i + 5].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+                        worksheet.Cells[2, 4 * i + 5].Style.Border.Left.Style = ExcelBorderStyle.Medium;
+                        worksheet.Cells[2, 4 * i + 6].Value = "غلط";
+                        worksheet.Cells[2, 4 * i + 6].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
+                        worksheet.Cells[2, 4 * i + 6].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+                        worksheet.Cells[2, 4 * i + 6].Style.Border.Left.Style = ExcelBorderStyle.Thin;
+                        worksheet.Cells[2, 4 * i + 7].Value = "سفید";
+                        worksheet.Cells[2, 4 * i + 7].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
+                        worksheet.Cells[2, 4 * i + 7].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+                        worksheet.Cells[2, 4 * i + 7].Style.Border.Left.Style = ExcelBorderStyle.Thin;
+                        worksheet.Cells[2, 4 * i + 8].Value = "درصد";
+                        worksheet.Cells[2, 4 * i + 8].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
+                        worksheet.Cells[2, 4 * i + 8].Style.Border.Right.Style = ExcelBorderStyle.Medium;
+                    }
+                    // Add students
+                    int rowCounter = 3; // start from row 3
+                    foreach (var student in students)
+                    {
+                        if (student.Type != type)
+                            continue;
+                        // Add normal info
+                        worksheet.Cells[rowCounter, 1].Value = student.Name;
+                        worksheet.Cells[rowCounter, 2].Value = TypeToString(type);
+                        worksheet.Cells[rowCounter, 3].Value = student.IsMale ? "مرد" : "زن";
+                        worksheet.Cells[rowCounter, 4].Value = student.Parvande;
+                        // Add subjects info
+                        for (int i = 0; i < ranges.Length; i++)
+                        {
+                            (_, int[] questions) = ranges[i];
+                            int correct = 0, white = 0, mistake = 0;
+                            foreach (var question in questions)
+                            {
+                                // also note question - 1
+                                if (student.Answers[question - 1] == 0) // check empty answer
+                                    white++;
+                                else if (student.Answers[question - 1] == student.AnswersKey[question - 1])
+                                    correct++;
+                                else
+                                    mistake++;
+                            }
+                            worksheet.Cells[rowCounter, 4 * i + 5].Value = correct;
+                            worksheet.Cells[rowCounter, 4 * i + 6].Value = mistake;
+                            worksheet.Cells[rowCounter, 4 * i + 7].Value = white;
+                            worksheet.Cells[rowCounter, 4 * i + 8].Formula = ExcelFormula.SubjectFormula;
+                            // styling
+                            for (int j = 0; j < 4; j++)
+                                worksheet.Cells[rowCounter, 4 * i + 5 + j].Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                            worksheet.Cells[rowCounter, 4 * i + 8].Style.Border.Right.Style = ExcelBorderStyle.Medium;
+                            worksheet.Cells[rowCounter, 4 * i + 5].Style.Border.Left.Style = ExcelBorderStyle.Medium;
+                        }
+                        // Add a row to row counter
+                        rowCounter++;
+                    }
+                    // Add average
+                    worksheet.Cells[rowCounter, 1].Value = "میانگین";
+                    worksheet.Cells[rowCounter, 1, rowCounter, 4].Merge = true;
+                    for (int i = 5; i <= worksheet.Dimension.Columns; i++) // note that it must be <=
+                        worksheet.Cells[rowCounter, i].Formula = ExcelFormula.AverageBottomFormula;
+                    // Do styling
+                    // Add borders to some headers; Note that these must be added at last to override other borders of the other cells
+                    worksheet.Cells[1, 1, 1, 4].Style.Border.BorderAround(ExcelBorderStyle.Medium);
+                    for (int i = 1; i <= 4; i++) // add for second row
+                        worksheet.Cells[2, i].Style.Border.BorderAround(ExcelBorderStyle.Medium);
+                    for (int i = 3; i <= worksheet.Dimension.Rows; i++) // add for names and average
+                    {
+                        for (int j = 1; j <= 4; j++)
+                            worksheet.Cells[i, j].Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                        worksheet.Cells[i, 4].Style.Border.Right.Style = ExcelBorderStyle.Medium;
+                    }
+                    for (int i = 1; i <= worksheet.Dimension.Columns; i++) // Footer (average)
+                    {
+                        worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
+                        worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Top.Style = ExcelBorderStyle.Medium;
+                        worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+                        if (i % 4 == 0) // Note that there is no need for checking the (i % 4 == 1) and editing the left side
+                            worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Right.Style =
+                                ExcelBorderStyle.Medium;
+                    }
+                    //worksheet.Cells.Style.Border.BorderAround(ExcelBorderStyle.Thin); 
+                    worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
+                    // Footer style
+                    worksheet.Cells[rowCounter, 1, rowCounter, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    worksheet.Cells[rowCounter, 1, rowCounter, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
+                    // Add top border
+                    worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Border.Top.Style = ExcelBorderStyle.Medium;
+                    worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Border.Left.Style = ExcelBorderStyle.Medium;
+                    // Center everything
+                    worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                }
+                // Create question specific sheets
+                for (int qIndex = 0; qIndex < questionCount; qIndex++) // Note 
+                {
+                    // At first check where does this question belong
+                    string subjectName = "";
+                    foreach (var (title, ranges) in subjectsAndRange)
+                        if (ranges.Last().Item2.Contains(qIndex + 1)) // note qIndex + 1
+                        {
+                            subjectName = title;
+                            break;
+                        }
+
+                    if (subjectName == "")
+                    {
+                        Console.WriteLine("Error on getting subject name for question {0}", qIndex);
+                        continue;
+                    }
+
+                    ExcelWorksheet worksheet = excel.Workbook.Worksheets[subjectName + " سوال به سوال"];
+                    if (worksheet == null)
+                    {
+                        worksheet = excel.Workbook.Worksheets.Add(subjectName + " سوال به سوال");
+                        // do some styling
+                        worksheet.Cells[1, 1].Value = "عنوان";
+                        worksheet.Cells[2, 1].Value = "شماره";
+                        worksheet.Cells[3, 1].Value = "تعداد گزینه صحیح";
+                        worksheet.Cells[4, 1].Value = "درصد گزینه صحیح";
+                        worksheet.Cells[5, 1].Value = "تعداد گزینه اشتباه";
+                        worksheet.Cells[6, 1].Value = "درصد گزینه اشتباه";
+                        worksheet.Cells[7, 1].Value = "تعداد گزینه سفید";
+                        worksheet.Cells[8, 1].Value = "درصد گزینه سفید";
+                        worksheet.Cells[9, 1].Value = "درصد سوال";
+
+                        worksheet.Column(1).Width = 15d;
+                        worksheet.Row(1).Height = 150d;
+
+                        worksheet.View.RightToLeft = true;
+                    }
+                    // Get the statics
+                    int correct = 0, white = 0, wrong = 0;
+                    foreach (var student in students)
+                    {
+                        if (student.Type != type) // ignore non math students
+                            continue;
+                        if (student.Answers[qIndex] == 0) // question is white
+                            white++;
+                        else if (student.Answers[qIndex] == student.AnswersKey[qIndex]) // correct answer
+                            correct++;
+                        else // wrong answer
+                            wrong++;
+                    }
+                    // Fill the style sheet
+                    // Get the title
+                    string questionTitle = subjectName;
+                    foreach (var (name, ranges) in subjectsAndRange)
+                    {
+                        // ReSharper disable once InvertIf Do not check other subjects
+                        if (name == subjectName)
+                        {
+                            foreach (var (candidateTitle, range) in ranges)
+                            {
+                                // ReSharper disable once InvertIf We must not check other titles
+                                if (range.Contains(qIndex + 1))
+                                {
+                                    questionTitle = candidateTitle;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    // Now fill the sheet
+                    int column = worksheet.Dimension.Columns + 1;
+                    worksheet.Cells[1, column].Value = questionTitle;
+                    worksheet.Cells[1, column].Style.TextRotation = 180;
+                    worksheet.Cells[2, column].Value = (qIndex + 1).ToString();
+                    worksheet.Cells[3, column].Value = correct;
+                    worksheet.Cells[4, column].Formula = ExcelFormula.QuestionsCorrectPercentage;
+                    worksheet.Cells[5, column].Value = wrong;
+                    worksheet.Cells[6, column].Formula = ExcelFormula.QuestionsWrongPercentage;
+                    worksheet.Cells[7, column].Value = white;
+                    worksheet.Cells[8, column].Formula = ExcelFormula.QuestionsWhitePercentage;
+                    worksheet.Cells[9, column].Formula = ExcelFormula.QuestionsPercentage;
+                }
+                // Final styling for question specific sheets
+                foreach (var (title, _) in subjectsAndRange)
+                {
+                    var worksheet = excel.Workbook.Worksheets[title + " سوال به سوال"];
+                    // Do coloring
+                    worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    worksheet.Cells[1, 1, 2, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
+                    worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
+                    // Do borders
+                    for (int i = 1; i <= worksheet.Dimension.Rows; i++)
+                        for (int j = 1; j <= worksheet.Dimension.Columns; j++)
+                        {
+                            worksheet.Cells[i, j].Style.Border.Right.Style = ExcelBorderStyle.Medium;
+                            worksheet.Cells[i, j].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+                        }
+
+                    for (int i = 1; i <= worksheet.Dimension.Columns; i++)
+                    {
+                        worksheet.Cells[2, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium; // title rows
+                        worksheet.Cells[worksheet.Dimension.Rows, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium; // last row
+                    }
+                    // Add top border
+                    worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Border.Top.Style = ExcelBorderStyle.Medium;
+                    worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Border.Left.Style = ExcelBorderStyle.Medium;
+                    // Do text alignment
+                    worksheet.Cells.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    worksheet.Cells.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                }
+                // Create overall sheet
+                {
+                    var worksheet = excel.Workbook.Worksheets.Add("نتایج کلی");
+                    worksheet.View.RightToLeft = true;
+                    worksheet.Column(1).Width = 27.5d; // names are big
+                    // Add headers
+                    worksheet.Cells[1, 1].Value = "نام و نام خانوادگی";
+                    int columnCounter = 2;
+                    foreach (var (subjectName, _) in subjectsAndRange)
+                    {
+                        worksheet.Cells[1, columnCounter].Value = subjectName;
+                        columnCounter++;
+                    }
+                    worksheet.Cells[1, columnCounter].Value = "رتبه منطقه";
+                    worksheet.Cells[1, columnCounter + 1].Value = "رتبه کشور";
+                    worksheet.Cells[1, columnCounter + 2].Value = "تراز کل";
+                    worksheet.Cells[1, columnCounter + 3].Value = "رتبه سهمیه";
+                    // Add students
+                    int rowCounter = 2;
+                    foreach (var student in students)
+                    {
+                        if (student.Type != type)
+                            continue;
+                        // Add data
+                        worksheet.Cells[rowCounter, 1].Value = student.Name;
+                        for (int i = 0; i < student.Grades.Length; i++)
+                            worksheet.Cells[rowCounter, i + 2].Value = student.Grades[i];
+                        worksheet.Cells[rowCounter, student.Grades.Length + 2].Value = student.RankOverall;
+                        worksheet.Cells[rowCounter, student.Grades.Length + 3].Value = student.RankCountryOverall;
+                        worksheet.Cells[rowCounter, student.Grades.Length + 4].Value = student.NormalizedScoreOverall;
+                        if (student.RankSpecialOverall == 0)
+                            worksheet.Cells[rowCounter, student.Grades.Length + 5].Value = "-";
+                        else
+                            worksheet.Cells[rowCounter, student.Grades.Length + 6].Value = student.RankSpecialOverall;
+                        // add to row counter
+                        rowCounter++;
+                    }
+                    // Do styling
+                    worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    worksheet.Cells[1, 1, 1, worksheet.Dimension.Columns].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
+                    worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    worksheet.Cells[1, 1, worksheet.Dimension.Rows, 1].Style.Fill.BackgroundColor.SetColor(Color.Yellow);
+                    // Draw some borders
+                    for (int i = 1; i <= worksheet.Dimension.Rows; i++)
+                    {
+                        worksheet.Cells[i, 1].Style.Border.Right.Style = ExcelBorderStyle.Medium;
+                        worksheet.Cells[i, 1].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
+                    }
+                    for (int i = 1; i <= worksheet.Dimension.Columns; i++)
+                    {
+                        worksheet.Cells[1, i].Style.Border.Right.Style = ExcelBorderStyle.Medium;
+                        worksheet.Cells[1, i].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
+                    }
+                    for (int i = 2; i <= worksheet.Dimension.Rows; i++)
+                        for (int j = 2; j <= worksheet.Dimension.Columns; j++)
+                        {
+                            worksheet.Cells[i, j].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+                            worksheet.Cells[i, j].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+                        }
+                }
+                excel.Save();
+            }
+        }
+
         /// <summary>
         /// Converts <see cref="StudentType"/> to a persian string
         /// </summary>
