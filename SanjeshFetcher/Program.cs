@@ -623,10 +623,24 @@ namespace SanjeshFetcher
                     // Add headers
                     worksheet.Cells[1, 1].Value = "نام و نام خانوادگی";
                     int columnCounter = 2;
-                    foreach (var (subjectName, _) in subjectsAndRange)
+                    if (type == StudentType.Math) // For math students, I have split the math questions into geometry and etc. Here, I use hardcoded subject names to fix the issue with more columns
                     {
-                        worksheet.Cells[1, columnCounter].Value = subjectName;
-                        columnCounter++;
+                        worksheet.Cells[1, 2].Value = "ادبیات";
+                        worksheet.Cells[1, 3].Value = "عربی";
+                        worksheet.Cells[1, 4].Value = "دینی";
+                        worksheet.Cells[1, 5].Value = "زبان";
+                        worksheet.Cells[1, 6].Value = "ریاضی";
+                        worksheet.Cells[1, 7].Value = "فیزیک";
+                        worksheet.Cells[1, 8].Value = "شیمی";
+                        columnCounter = 9;
+                    }
+                    else
+                    {
+                        foreach (var (subjectName, _) in subjectsAndRange)
+                        {
+                            worksheet.Cells[1, columnCounter].Value = subjectName;
+                            columnCounter++;
+                        }
                     }
                     worksheet.Cells[1, columnCounter].Value = "رتبه منطقه";
                     worksheet.Cells[1, columnCounter + 1].Value = "رتبه کشور";

@@ -367,6 +367,9 @@ namespace SanjeshFetcher
         };
         public static readonly Tuple<string, int[]>[] EnsaniPhilosophyPositions =
         {
+            Tuple.Create("منطق", Range(236,244)),
+            Tuple.Create("فلسفه 1", Range(245,252)),
+            Tuple.Create("فلسفه 2", Range(253,260)),
             Tuple.Create("فلسفه", Range(236,260)),
         };
         public static readonly Tuple<string, int[]>[] EnsaniPsychologyPositions =
