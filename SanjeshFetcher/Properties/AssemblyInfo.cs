@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("SanjeshFetcher")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("A project to fetch student's data from sanjesh.org for Konkoor 99 and generate excel file for it")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("SanjeshFetcher")]
-[assembly: AssemblyCopyright("Copyright ©  2020")]
+[assembly: AssemblyCompany("Hirbod Behnam")]
+[assembly: AssemblyProduct("Sanjesh Fetcher")]
+[assembly: AssemblyCopyright("Copyright Hirbod Behnam ©  2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
